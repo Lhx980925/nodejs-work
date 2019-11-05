@@ -2,20 +2,18 @@ const http = require('http'),
       qs   = require('querystring'),
       fs   = require('fs');
 
-var isLogin;
 var logincount=0;
 
 http.createServer((req, res) => {
   var data = '';
 
   if(typeof req.headers['cookie'] === 'undefined') {
-    isLogin = false;
+    logincount=0;
   } else {
     var pair = req.headers['cookie'].split('=');
-    isLogin = (pair[1] === 'true');
+    isLogin = pair[1];
   }
 
-  console.log(isLogin);
 
   if(req.method === 'POST' && req.url === '/login') {
     req.on('data', (chunk) => { data += chunk; });
@@ -24,7 +22,6 @@ http.createServer((req, res) => {
 
       if(account.username === 'zhangsan' && account.pwd === '123') {
         console.log('user: %s, password: %s', account.username, account.pwd);
-        isLogin = true;
         logincount+=1;
         console.log(logincount);
         showHome(res);
@@ -35,10 +32,9 @@ http.createServer((req, res) => {
   }
 
   if(req.method === 'GET') {
-    if(isLogin) {
+    if(logincount) {
       if(req.url === '/logout') {
-        isLogin = false;
-        res.setHeader('Set-cookie', `login=${isLogin}; max-age=6000000`);
+        res.setHeader('Set-cookie', `logincount=${logincount}; max-age=6000000`);
         showLogin(res);
       } else {
         showHome(res);
@@ -94,7 +90,7 @@ function showHome(res) {
 
   res.setHeader('Content-Type', 'text/html');
   res.setHeader('Content-Length', Buffer.byteLength(html));
-  res.setHeader('Set-cookie', `login=${isLogin}; max-age=600`);
+  res.setHeader('Set-cookie', `logincount=${logincount}; max-age=600`);
 
   res.statusCode = 200;
   res.end(html);
